@@ -11,7 +11,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://tasky-umber-two.vercel.app"],
+    origin: [ "https://tasky-umber-two.vercel.app"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
