@@ -9,15 +9,18 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:5173",
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
-
 app.use("/api", taskRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Hello Frankit, your API is running here men");
+  res.send("Hello Frankit, your API is running here");
 });
 
 const PORT = process.env.PORT || 5000;

@@ -1,7 +1,5 @@
-
 generator client {
   provider = "prisma-client-js"
- 
 }
 
 datasource db {
@@ -9,16 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
   id        String   @id @default(uuid())
   name      String
-    username String   @unique
-
   email     String   @unique
   password  String
-  tasks     Task[]
   createdAt DateTime @default(now())
+  username  String   @unique
+  tasks     Task[]
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  title       String
+  description String?
+  completed   Boolean    @default(false)
+  userId      String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  category    String
+  dueDate     DateTime
+  status      TaskStatus @default(Pending)
+  user        User       @relation(fields: [userId], references: [id])
 }
 
 enum TaskStatus {
@@ -26,21 +36,4 @@ enum TaskStatus {
   Pending
   Review
   Done
-}
-
-model Task {
-  id          String   @id @default(uuid())
-  title       String
-  description String?
-    category    String
-      dueDate     DateTime
-  completed   Boolean  @default(false)
-  
-    status      TaskStatus @default(Pending) // ✅ New status field
-
-  userId      String
-  user        User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-
 }
