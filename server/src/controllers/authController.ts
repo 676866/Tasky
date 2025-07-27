@@ -5,7 +5,6 @@ import prisma from "../prisma/client";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
 
-// ✅ Register User
 export const registerUser = async (req: Request, res: Response) => {
   const { firstName, lastName, username, email, password } = req.body;
 
@@ -38,7 +37,7 @@ export const registerUser = async (req: Request, res: Response) => {
 
     return res.status(201).json({ message: "User registered successfully" });
   } catch (error: any) {
-    console.error("❌ Registration Error:", error);
+    console.error(" Registration Error:", error);
     return res.status(500).json({
       message: "Registration failed",
       error: error.message || "Internal server error",
@@ -46,7 +45,6 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Login User
 export const loginUser = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
@@ -60,17 +58,17 @@ export const loginUser = async (req: Request, res: Response) => {
     const user = await prisma.user.findUnique({ where: { email } });
 
     if (!user) {
-      console.warn("❌ No user found for:", email);
+      console.warn("No user found for:", email);
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     if (!user.password) {
-      console.warn("❌ User has no password stored:", email);
+      console.warn("User has no password stored:", email);
       return res.status(500).json({ message: "User password is missing in database" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log("🔐 Password match:", isMatch);
+    console.log(" Password match:", isMatch);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -82,7 +80,7 @@ export const loginUser = async (req: Request, res: Response) => {
       { expiresIn: "7d" }
     );
 
-    console.log("✅ Login successful for:", email);
+    console.log(" Login successful for:", email);
     return res.status(200).json({
       token,
       user: {
@@ -93,7 +91,7 @@ export const loginUser = async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    console.error("🔥 Login Error:", error.message);
+    console.error("Login Error:", error.message);
     return res.status(500).json({
       message: "Login failed",
       error: error.message || "Unknown server error",

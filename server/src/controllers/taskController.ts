@@ -10,7 +10,6 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
-// Creating Task
 export const createTask = async (req: AuthenticatedRequest, res: Response) => {
   const { title, description, category, dueDate, status } = req.body;
   const userId = req.user?.id;
@@ -44,7 +43,6 @@ export const createTask = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-// ✅ Get all tasts
 export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
   const userId = req.user?.id;
 
@@ -64,7 +62,6 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-// Update Task
 export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const userId = req.user?.id;
@@ -102,7 +99,6 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-// Deleting Task
 export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const userId = req.user?.id;
