@@ -56,7 +56,7 @@ const Footer = () => {
 
         <Grid item xs={12} md={4}>
           <Typography variant="h6" fontWeight="bold" gutterBottom>
-            Support
+            Connect
           </Typography>
           <Box display="flex" alignItems="center" gap={1}>
             <span role="img" aria-label="email">
