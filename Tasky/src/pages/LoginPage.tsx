@@ -51,7 +51,7 @@ const LoginPage = () => {
       const res = await axios.post<{
         token: string;
         user: { id: string; name: string; email: string };
-      }>("http://localhost:5000/api/auth/login", form);
+      }>("https://tasky-5jyl.onrender.com/api/auth/login", form);
 
       const { user } = res.data;
 

@@ -12,7 +12,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { type Task } from "../types";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API_URL = import.meta.env.VITE_API_URL || "https://tasky-5jyl.onrender.com";
 const categories = ["Health", "Study", "Work", "Personal Errand"];
 
 interface AddTaskModalProps {

@@ -67,7 +67,7 @@ const RegisterPage = () => {
     };
 
     try {
-      await axios.post("http://localhost:5000/api/auth/register", registerData);
+      await axios.post("https://tasky-5jyl.onrender.com/api/auth/register", registerData);
       navigate("/login");
     } catch (err: any) {
       console.error(err);
