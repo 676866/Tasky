@@ -9,10 +9,14 @@ dotenv.config();
 
 const app = express();
 
-app.use(cors({
-  origin: process.env.CLIENT_URL || "https://tasky-9i54evgkc-676866s-projects.vercel.app",
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://tasky-umber-two.vercel.app"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
+
 
 app.use(express.json());
 
@@ -20,7 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api", taskRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Hello Frankit, your API is running here");
+  res.send("Hello Frankit, your API is running");
 });
 
 const PORT = process.env.PORT || 5000;
