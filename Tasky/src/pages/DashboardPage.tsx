@@ -1,57 +1,17 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import {
-  Box,
-  Grid,
-  Typography,
-  TextField,
-  Paper,
-  InputAdornment,
-  CircularProgress,
-  Checkbox,
-  IconButton,
-  FormControlLabel,
-  Avatar,
-  Tooltip,
-  Drawer,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-  Popover,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  SwipeableDrawer,
-} from "@mui/material";
-import {
-  Home,
-  MoveToInbox,
-  Settings,
-  Logout,
-  Add,
-  NotificationsActive,
-  Person,
-  Menu as MenuIcon,
-  ChevronLeft,
-  Checklist,
-  FilterList,
-} from "@mui/icons-material";
-import {
-  DragDropContext,
-  Droppable,
-  Draggable,
-  type DroppableProvided,
-  type DraggableProvided,
-} from "react-beautiful-dnd";
+import { Box,Grid,Typography,TextField,Paper,InputAdornment,CircularProgress,Checkbox,IconButton,FormControlLabel,Avatar,Tooltip,Drawer,List,
+  ListItem,ListItemIcon,ListItemText,Divider,Popover,Dialog,DialogTitle,DialogContent,DialogActions,Button,  SwipeableDrawer,} from "@mui/material";
+import { Home,MoveToInbox,Settings,Logout,Add,NotificationsActive,Person,Menu as MenuIcon,ChevronLeft,Checklist,FilterList,} from "@mui/icons-material";
+import {DragDropContext,Droppable,Draggable,type DroppableProvided,type DraggableProvided,} from "react-beautiful-dnd";
 import AddTaskModal from "../components/AddTaskModal";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import { toast } from "react-toastify";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DeleteIcon from "@mui/icons-material/Delete"; 
+import GroupIcon from "@mui/icons-material/Group";
+import { useNavigate } from "react-router-dom";
 
 interface Task {
   id: string;
@@ -63,16 +23,15 @@ interface Task {
   userId: string;
   createdAt: string;
   updatedAt: string;
-  status: "Active" | "Pending" | "Review" | "Done";
+  status: "Active" | "Pending" | "Review" | "Done" |"Trash";
+  trashed: boolean;
 }
-
-const statusColumns = ["Active", "Pending", "Review", "Done"];
+const statusColumns = ["Active", "Pending", "Review", "Done", "Trash"];
 const drawerWidth = 220;
-
 const DashboardPage = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredStatus, setFilteredStatus] = useState<string | null>(null);
-
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -82,7 +41,7 @@ const DashboardPage = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notifDrawer, setNotifDrawer] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-
+  const [showTrash, setShowTrash] = useState(false); 
   const [highlightedColumn, setHighlightedColumn] = useState<string | null>(
     null,
   );
@@ -100,24 +59,25 @@ const DashboardPage = () => {
   const token = localStorage.getItem("token");
 
   const fetchTasks = async () => {
-    try {
-      setLoading(true);
-      const res = await axios.get<{ tasks: Task[] }>(
-        `${import.meta.env.VITE_API_URL}/api/tasks`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
-      setTasks(res.data.tasks ?? []);
-    } catch {
-      toast.error("Failed to fetch tasks.");
-      setTasks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  try {
+    setLoading(true);
+    interface TasksResponse {
+  tasks: Task[];
+}
 
-  useEffect(() => {
+const res = await axios.get<TasksResponse>(`${import.meta.env.VITE_API_URL}/api/tasks`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+setTasks(res.data.tasks.filter(t => showTrash ? t.trashed : !t.trashed));
+  } catch {
+    toast.error("Failed to fetch tasks.");
+    setTasks([]);
+  } finally {
+    setLoading(false);
+  }
+};
+ useEffect(() => {
     fetchTasks();
   }, []);
 
@@ -183,8 +143,7 @@ const DashboardPage = () => {
       toast.error("Failed to update task");
     }
   };
-
-  const handleUndoChange = async (
+const handleUndoChange = async (
     taskId: string,
     prevStatus: Task["status"],
   ) => {
@@ -228,6 +187,20 @@ const DashboardPage = () => {
     return matchSearch && matchStatus;
   });
 
+  const handleMoveToTrash = async (taskId: string) => {
+  try {
+    await axios.put(
+      `${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`,
+      { trashed: true },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    toast.success("Moved to trash!");
+    fetchTasks();
+  } catch {
+    toast.error("Failed to move task to trash");
+  }
+};
+
   return (
     <Box sx={{ display: "flex" }}>
       <Drawer
@@ -261,12 +234,10 @@ const DashboardPage = () => {
         </Box>
 
         <List>
-          <ListItem button>
-            <ListItemIcon>
-              <Home />
-            </ListItemIcon>
-            {sidebarOpen && <ListItemText primary="Home" />}
-          </ListItem>
+         <ListItem button onClick={() => navigate("/")}>
+  <ListItemIcon><Home /></ListItemIcon>
+  <ListItemText primary="Home" />
+</ListItem>
 
           <ListItem button onClick={() => setNotifDrawer(true)}>
             <ListItemIcon>
@@ -274,6 +245,12 @@ const DashboardPage = () => {
             </ListItemIcon>
             {sidebarOpen && <ListItemText primary="Inbox" />}
           </ListItem>
+
+<ListItem button onClick={() => navigate("/collaborate")}>
+  <ListItemIcon><GroupIcon /></ListItemIcon>
+  <ListItemText primary="Collaborate" />
+</ListItem>
+
 
           <ListItem
             button
@@ -349,6 +326,12 @@ const DashboardPage = () => {
             </ListItemIcon>
             {sidebarOpen && <ListItemText primary="Sign Out" />}
           </ListItem>
+
+<ListItem button onClick={() => setShowTrash(true)}>
+  <ListItemIcon><DeleteIcon /></ListItemIcon>
+  <ListItemText primary="Trash" />
+</ListItem>
+
         </List>
       </Drawer>
 
@@ -389,7 +372,7 @@ const DashboardPage = () => {
         </Grid>
 
         <Typography variant="h5" mb={2}>
-          Hey {profile.name || "User"}, 👋
+          Hey {profile.name || "User"}👋, here is whats's on your plate today
         </Typography>
         {filteredStatus && (
           <Button
@@ -448,121 +431,108 @@ const DashboardPage = () => {
                           minHeight={200}
                         >
                           {filteredTasks
-                            .filter((task) => task.status === status)
-                            .map((task, index) => (
-                              <Draggable
-                                key={task.id}
-                                draggableId={task.id}
-                                index={index}
-                              >
-                                {(provided: DraggableProvided) => (
-                                  <Paper
-                                    ref={provided.innerRef}
-                                    {...provided.draggableProps}
-                                    {...provided.dragHandleProps}
-                                    sx={{
-                                      p: 2,
-                                      mb: 2,
-                                      borderLeft: `5px solid ${task.completed ? "#4caf50" : "#2196f3"}`,
-                                      transition: "transform 0.2s",
-                                      "&:hover": { transform: "scale(1.02)" },
-                                    }}
-                                  >
-                                    <FormControlLabel
-                                      control={
-                                        <Checkbox
-                                          checked={task.completed}
-                                          onChange={() =>
-                                            handleToggleComplete(
-                                              task.id,
-                                              task.completed,
-                                              task.status,
-                                            )
-                                          }
-                                          sx={{
-                                            color:
-                                              task.status === "Done"
-                                                ? "success.main"
-                                                : task.status === "Review"
-                                                  ? "warning.main"
-                                                  : task.status === "Pending"
-                                                    ? "info.main"
-                                                    : "primary.main",
-                                            "&.Mui-checked": {
-                                              color:
-                                                task.status === "Done"
-                                                  ? "success.main"
-                                                  : task.status === "Review"
-                                                    ? "warning.main"
-                                                    : "primary.main",
-                                            },
-                                          }}
-                                        />
-                                      }
-                                      label={
-                                        <Typography fontWeight={600}>
-                                          {task.title}
-                                        </Typography>
-                                      }
-                                    />
-                                    <Typography variant="body2">
-                                      {task.description}
-                                    </Typography>
-                                    <Typography variant="caption">
-                                      Due:{" "}
-                                      {new Date(
-                                        task.dueDate,
-                                      ).toLocaleDateString()}
-                                    </Typography>
-                                    <Box
-                                      mt={1}
-                                      display="flex"
-                                      alignItems="center"
-                                      gap={1}
-                                    >
-                                      <Avatar sx={{ width: 24, height: 24 }} />
-                                      <Typography variant="caption">
-                                        Assigned to You
-                                      </Typography>
-                                    </Box>
-                                    <IconButton
-                                      onClick={() => setEditingTask(task)}
-                                    >
-                                      <EditIcon />
-                                    </IconButton>
+  .filter((task) => {
+    if (status === "Trash") return task.trashed === true;
+    return task.status === status && !task.trashed;
+  })
+  .map((task, index) => (
+    <Draggable
+      key={task.id}
+      draggableId={task.id}
+      index={index}
+    >
+      {(provided: DraggableProvided) => (
+        <Paper
+          ref={provided.innerRef}
+          {...provided.draggableProps}
+          {...provided.dragHandleProps}
+          sx={{
+            p: 2,
+            mb: 2,
+            borderLeft: `5px solid ${task.completed ? "#4caf50" : "#2196f3"}`,
+            transition: "transform 0.2s",
+            "&:hover": { transform: "scale(1.02)" },
+          }}
+        >
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={task.completed}
+                onChange={() =>
+                  handleToggleComplete(task.id, task.completed, task.status)
+                }
+                sx={{
+                  color:
+                    task.status === "Done"
+                      ? "success.main"
+                      : task.status === "Review"
+                        ? "warning.main"
+                        : task.status === "Pending"
+                          ? "info.main"
+                          : "primary.main",
+                  "&.Mui-checked": {
+                    color:
+                      task.status === "Done"
+                        ? "success.main"
+                        : task.status === "Review"
+                          ? "warning.main"
+                          : "primary.main",
+                  },
+                }}
+              />
+            }
+            label={
+              <Typography fontWeight={600}>
+                {task.title}
+              </Typography>
+            }
+          />
 
-                                    {status === "Pending" && (
-                                      <Tooltip title="Mark as Active">
-                                        <IconButton
-                                          onClick={() =>
-                                            handleToggleComplete(
-                                              task.id,
-                                              false,
-                                              "Pending",
-                                            )
-                                          }
-                                          color="success"
-                                        >
-                                          <CheckCircleIcon />
-                                        </IconButton>
-                                      </Tooltip>
-                                    )}
-                                  </Paper>
-                                )}
-                              </Draggable>
-                            ))}
+          <Typography variant="body2">
+            {task.description}
+          </Typography>
+
+          {(status === "Review" || status === "Done") && (
+            <IconButton onClick={() => handleMoveToTrash(task.id)}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
+
+          <Typography variant="caption">
+            Due: {new Date(task.dueDate).toLocaleDateString()}
+          </Typography>
+
+          <Box mt={1} display="flex" alignItems="center" gap={1}>
+            <Avatar sx={{ width: 24, height: 24 }} />
+            <Typography variant="caption">Assigned to You</Typography>
+          </Box>
+
+          <IconButton onClick={() => setEditingTask(task)}>
+            <EditIcon />
+          </IconButton>
+          {status === "Pending" && (
+            <Tooltip title="Mark as Active">
+              <IconButton
+                onClick={() =>
+                  handleToggleComplete(task.id, false, "Pending")
+                }
+                color="success"
+              >
+                <CheckCircleIcon />
+              </IconButton>
+            </Tooltip>
+          )}
+        </Paper>
+      )}
+    </Draggable>
+))}
+
                           {provided.placeholder}
-                        </Box>
-                      )}
+                        </Box>)}
                     </Droppable>
                   </Paper>
-                </Grid>
-              ))}
-            </Grid>
-          </DragDropContext>
-        )}
-
-        <AddTaskModal
+                </Grid>))}</Grid></DragDropContext>)}
+   <AddTaskModal
           open={isModalOpen || Boolean(editingTask)}
           onClose={() => {
             setIsModalOpen(false);

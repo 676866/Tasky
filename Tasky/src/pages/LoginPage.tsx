@@ -53,11 +53,12 @@ const LoginPage = () => {
         user: { id: string; name: string; email: string };
       }>("https://tasky-5jyl.onrender.com/api/auth/login", form);
 
-      const { user } = res.data;
+      const { user, token } = res.data;
 
-      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
+      console.log("Login successful, navigating to dashboard...");
       navigate("/dashboard");
     } catch (err: any) {
       console.error(err);
@@ -102,6 +103,7 @@ const LoginPage = () => {
               margin="normal"
               value={form.email}
               onChange={handleChange}
+              autoComplete="email" 
             />
             <TextField
               label="Password"
@@ -111,6 +113,7 @@ const LoginPage = () => {
               margin="normal"
               value={form.password}
               onChange={handleChange}
+              autoComplete="current-password" 
             />
 
             <Box mt={3} sx={{ position: "relative", height: 56 }}>
@@ -127,15 +130,15 @@ const LoginPage = () => {
                     buttonPosition === "center"
                       ? "-50%"
                       : buttonPosition === "left"
-                        ? "0"
-                        : "calc(100% - 120px)"
+                      ? "0"
+                      : "calc(100% - 120px)"
                   })`,
                   left:
                     buttonPosition === "center"
                       ? "50%"
                       : buttonPosition === "left"
-                        ? 0
-                        : "unset",
+                      ? 0
+                      : "unset",
                   right: buttonPosition === "right" ? 0 : "unset",
                   width: 120,
                   transition: "transform 0.3s, left 0.3s, right 0.3s",
