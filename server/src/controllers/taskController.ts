@@ -32,8 +32,9 @@ export const createTask = async (req: AuthenticatedRequest, res: Response) => {
         category,
         dueDate: new Date(dueDate),
         completed: false,
-        userId,
         status: status || "Pending",
+        trashed: false,
+        userId,
       },
     });
     res.status(201).json(task);
@@ -52,9 +53,12 @@ export const getTasks = async (req: AuthenticatedRequest, res: Response) => {
 
   try {
     const tasks = await prisma.task.findMany({
-      where: { userId },
+      where: {
+        userId,
+      },
       orderBy: { createdAt: "desc" },
     });
+
     res.status(200).json({ tasks });
   } catch (error) {
     console.error("Error fetching tasks:", error);
@@ -70,7 +74,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
     return res.status(401).json({ message: "Unauthorized: Missing user ID" });
   }
 
-  const { title, description, category, dueDate, completed, status } = req.body;
+  const { title, description, category, dueDate, completed, status, trashed } = req.body;
 
   const updateData: any = {};
   if (title !== undefined) updateData.title = title;
@@ -79,6 +83,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
   if (dueDate !== undefined) updateData.dueDate = new Date(dueDate);
   if (completed !== undefined) updateData.completed = completed;
   if (status !== undefined) updateData.status = status;
+  if (trashed !== undefined) updateData.trashed = trashed;
 
   try {
     const task = await prisma.task.updateMany({
@@ -87,9 +92,7 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
     });
 
     if (task.count === 0) {
-      return res
-        .status(404)
-        .json({ message: "Task not found or unauthorized" });
+      return res.status(404).json({ message: "Task not found or unauthorized" });
     }
 
     res.status(200).json({ message: "Task updated successfully" });
@@ -113,12 +116,10 @@ export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
     });
 
     if (task.count === 0) {
-      return res
-        .status(404)
-        .json({ message: "Task not found or unauthorized" });
+      return res.status(404).json({ message: "Task not found or unauthorized" });
     }
 
-    res.status(200).json({ message: "Task deleted successfully" });
+    res.status(200).json({ message: "Task permanently deleted" });
   } catch (err) {
     console.error("Error deleting task:", err);
     res.status(500).json({ message: "Failed to delete task" });

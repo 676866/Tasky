@@ -29,6 +29,8 @@ model Task {
   dueDate     DateTime
   status      TaskStatus @default(Pending)
   user        User       @relation(fields: [userId], references: [id])
+  trashed     Boolean  @default(false) 
+
 }
 
 enum TaskStatus {
