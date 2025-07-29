@@ -43,9 +43,6 @@ const CollaboratePage = () => {
         >
           Create Request
         </Button>
-        <Button variant="outlined" size="small" startIcon={<SendIcon />}>
-          Send Request
-        </Button>
         <Button
           variant="outlined"
           size="small"
