@@ -56,10 +56,13 @@ const LoginPage = () => {
       const { user, token } = res.data;
 
       localStorage.setItem("token", token);
+      localStorage.setItem("lastLoginTime", Date.now().toString());
+
       localStorage.setItem("user", JSON.stringify(user));
 
       console.log("Login successful, navigating to dashboard...");
       navigate("/dashboard");
+      
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.message || "Login failed");
