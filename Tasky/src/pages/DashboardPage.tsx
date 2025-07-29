@@ -13,6 +13,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import GroupIcon from "@mui/icons-material/Group";
 import { useNavigate } from "react-router-dom";
 
+
 interface Task {
   id: string;
   title: string;
@@ -40,6 +41,7 @@ const DashboardPage = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [notifDrawer, setNotifDrawer] = useState(false);
+  const [] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showTrash, setShowTrash] = useState(false); 
   const [highlightedColumn, setHighlightedColumn] = useState<string | null>(
@@ -83,66 +85,75 @@ setTasks(res.data.tasks.filter(t => showTrash ? t.trashed : !t.trashed));
 
   const handleLogout = () => {
     localStorage.clear();
+     toast.success("Logged out successfully!👋", {
+    position: "top-right",
+  });
     window.location.href = "/";
   };
 
   const handleToggleComplete = async (
-    taskId: string,
-    current = false,
-    fromStatus?: Task["status"],
-    toStatus?: Task["status"],
-  ) => {
-    try {
-      const task = tasks.find((t) => t.id === taskId);
-      if (!task) return;
+  taskId: string,
+  current = false,
+  fromStatus?: Task["status"],
+  toStatus?: Task["status"],
+) => {
+  try {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
 
-      const updates: Partial<Task> = { completed: !current };
+    const updates: Partial<Task> = { completed: !current };
 
-      if (fromStatus === "Pending" && !current) updates.status = "Active";
-      if (fromStatus === "Active" && !current) updates.status = "Done";
-      if (fromStatus === "Done" && current) updates.status = "Review";
+    if (fromStatus === "Pending" && !current) updates.status = "Active";
+    else if (fromStatus === "Active" && !current) updates.status = "Done";
+    else if (fromStatus === "Done" && current) updates.status = "Review";
 
-      if (toStatus) updates.status = toStatus;
+    if (toStatus) updates.status = toStatus;
 
-      await axios.put(
-        `${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`,
-        updates,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-
-      toast(
-        ({ closeToast }) => (
-          <Box display="flex" alignItems="center" gap={2}>
-            <CheckCircleIcon color="success" />
-            <Typography>Task updated</Typography>
-            <Button
-              color="inherit"
-              size="small"
-              onClick={async () => {
-                await handleUndoChange(taskId, task.status);
-                closeToast?.();
-              }}
-              sx={{ textTransform: "none", ml: "auto" }}
-            >
-              UNDO
-            </Button>
-          </Box>
-        ),
-        {
-          position: "bottom-center",
-          autoClose: 5000,
-          closeOnClick: false,
-          pauseOnHover: true,
-          draggable: false,
+    await axios.put(
+      `${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`,
+      updates,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      }
+    );
 
-      setHighlightedColumn(updates.status ?? "");
-      fetchTasks();
-    } catch {
-      toast.error("Failed to update task");
-    }
-  };
+    toast(
+      ({ closeToast }) => (
+        <Box display="flex" alignItems="center" gap={2}>
+          <CheckCircleIcon color="success" />
+          <Typography>Task updated</Typography>
+          <Button
+            color="inherit"
+            size="small"
+            onClick={async () => {
+              await handleUndoChange(taskId, task.status);
+              closeToast?.();
+            }}
+            sx={{ textTransform: "none", ml: "auto" }}
+          >
+            UNDO
+          </Button>
+        </Box>
+      ),
+      {
+        position: "bottom-center",
+        autoClose: 5000,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: false,
+      }
+    );
+
+    setHighlightedColumn(updates.status ?? "");
+    fetchTasks();
+  } catch (error) {
+    console.error("Toggle complete error:", error);
+    toast.error("Failed to update task");
+  }
+};
+
 const handleUndoChange = async (
     taskId: string,
     prevStatus: Task["status"],
@@ -180,164 +191,176 @@ const handleUndoChange = async (
   };
 
   const filteredTasks = tasks.filter((t) => {
-    const matchSearch = t.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchStatus = filteredStatus ? t.status === filteredStatus : true;
-    return matchSearch && matchStatus;
-  });
+  const matchSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase());
+  const matchStatus = filteredStatus ? t.status === filteredStatus : true;
+  return matchSearch && matchStatus && !t.trashed;
+});
 
-  const handleMoveToTrash = async (taskId: string) => {
+const handleMoveToTrash = async (taskId: string) => {
   try {
     await axios.put(
       `${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`,
       { trashed: true },
-      { headers: { Authorization: `Bearer ${token}` } }
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
     );
     toast.success("Moved to trash!");
     fetchTasks();
-  } catch {
+  } catch (err) {
+    console.error(err);
     toast.error("Failed to move task to trash");
   }
 };
 
+
+  const handleStatusChange = async (taskId: string, newStatus: Task["status"]) => {
+  try {
+    await axios.put(
+      `${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`,
+      { status: newStatus },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    fetchTasks();
+  } catch (err) {
+    toast.error("Failed to update task status");
+    console.error(err);
+  }
+};
+
+
   return (
     <Box sx={{ display: "flex" }}>
-      <Drawer
-        variant="persistent"
-        anchor="left"
-        open={sidebarOpen}
-        sx={{
-          width: sidebarOpen ? drawerWidth : 60,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: sidebarOpen ? drawerWidth : 60,
-            transition: "width 0.3s",
-            overflowX: "hidden",
-          },
-        }}
-      >
-        <Box sx={{ p: 2 }}>
-          <IconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
-            {sidebarOpen ? <ChevronLeft /> : <MenuIcon />}
-          </IconButton>
-          {sidebarOpen && (
-            <Typography variant="h6">
-              <Box display="flex" alignItems="center" gap={1}>
-                <img src="icon1.jpg" alt="Tasky Logo" width={50} height={50} />
-                <Typography variant="h6" fontWeight="bold">
-                  Tasky
-                </Typography>
-              </Box>
-            </Typography>
-          )}
-        </Box>
+{!sidebarOpen && (
+  <Box sx={{ position: "fixed", top: 16, left: 16, zIndex: 1300 }}>
+    <IconButton onClick={() => setSidebarOpen(true)}>
+      <MenuIcon />
+    </IconButton>
+  </Box>
+)}
 
-        <List>
-         <ListItem button onClick={() => navigate("/")}>
-  <ListItemIcon><Home /></ListItemIcon>
-  <ListItemText primary="Home" />
-</ListItem>
+<Drawer
+  variant="persistent"
+  anchor="left"
+  open={sidebarOpen}
+  sx={{
+    width: sidebarOpen ? drawerWidth : 60,
+    flexShrink: 0,
+    "& .MuiDrawer-paper": {
+      width: sidebarOpen ? drawerWidth : 60,
+      transition: "width 0.3s",
+      overflowX: "hidden",
+    },
+  }}
+>
+  <Box
+    sx={{
+      p: 2,
+      display: "flex",
+      justifyContent: sidebarOpen ? "space-between" : "center",
+      alignItems: "center",
+    }}
+  >
+    <IconButton onClick={() => setSidebarOpen(!sidebarOpen)}>
+      {sidebarOpen ? <ChevronLeft /> : <MenuIcon />}
+    </IconButton>
 
-          <ListItem button onClick={() => setNotifDrawer(true)}>
-            <ListItemIcon>
-              <MoveToInbox />
-            </ListItemIcon>
-            {sidebarOpen && <ListItemText primary="Inbox" />}
-          </ListItem>
+    {sidebarOpen && (
+      <Box display="flex" alignItems="center" gap={1}>
+        <img src="icon1.jpg" alt="Tasky Logo" width={40} height={40} />
+        <Typography variant="h6" fontWeight="bold">Tasky</Typography>
+      </Box>
+    )}
+  </Box>
 
-<ListItem button onClick={() => navigate("/collaborate")}>
-  <ListItemIcon><GroupIcon /></ListItemIcon>
-  <ListItemText primary="Collaborate" />
-</ListItem>
+  <List>
+    <ListItem button onClick={() => navigate("/")}>
+      <ListItemIcon><Home /></ListItemIcon>
+      {sidebarOpen && <ListItemText primary="Home" />}
+    </ListItem>
 
+    <ListItem button onClick={() => setNotifDrawer(true)}>
+      <ListItemIcon><MoveToInbox /></ListItemIcon>
+      {sidebarOpen && <ListItemText primary="Inbox" />}
+    </ListItem>
 
-          <ListItem
-            button
-            onClick={(e) => setAnchorEl(anchorEl ? null : e.currentTarget)}
-          >
-            <ListItemIcon>
-              <Checklist />
-            </ListItemIcon>
-            {sidebarOpen && <ListItemText primary="All" />}
-          </ListItem>
+    <ListItem button onClick={() => navigate("/collaborate")}>
+      <ListItemIcon><GroupIcon /></ListItemIcon>
+      {sidebarOpen && <ListItemText primary="Collaborate" />}
+    </ListItem>
 
-          <Popover
-            open={Boolean(anchorEl)}
-            anchorEl={anchorEl}
-            onClose={() => setAnchorEl(null)}
-            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          >
-            <List>
-              <ListItem
-                button
-                onClick={() => {
-                  setFilteredStatus("Active");
-                  setAnchorEl(null);
-                }}
-              >
-                <ListItemIcon>
-                  <FilterList />
-                </ListItemIcon>
-                <ListItemText primary="In Progress" />
-              </ListItem>
+    <ListItem button onClick={(e) => setAnchorEl(anchorEl ? null : e.currentTarget)}>
+      <ListItemIcon><Checklist /></ListItemIcon>
+      {sidebarOpen && <ListItemText primary="All" />}
+    </ListItem>
 
-              <ListItem
-                button
-                onClick={() => {
-                  setFilteredStatus("Done");
-                  setAnchorEl(null);
-                }}
-              >
-                <ListItemIcon>
-                  <FilterList />
-                </ListItemIcon>
-                <ListItemText primary="Completed" />
-              </ListItem>
+    <Popover
+      open={Boolean(anchorEl)}
+      anchorEl={anchorEl}
+      onClose={() => setAnchorEl(null)}
+      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+    >
+      <List>
+        <ListItem
+          button
+          onClick={() => {
+            setFilteredStatus("Active");
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon><FilterList /></ListItemIcon>
+          <ListItemText primary="In Progress" />
+        </ListItem>
 
-              <ListItem
-                button
-                onClick={() => {
-                  setPrefillStatus("Pending");
-                  setIsModalOpen(true);
-                  setAnchorEl(null);
-                }}
-              >
-                <ListItemIcon>
-                  <Add />
-                </ListItemIcon>
-                <ListItemText primary="New" />
-              </ListItem>
-            </List>
-          </Popover>
+        <ListItem
+          button
+          onClick={() => {
+            setFilteredStatus("Done");
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon><FilterList /></ListItemIcon>
+          <ListItemText primary="Completed" />
+        </ListItem>
 
-          <Divider />
+        <ListItem
+          button
+          onClick={() => {
+            setPrefillStatus("Pending");
+            setIsModalOpen(true);
+            setAnchorEl(null);
+          }}
+        >
+          <ListItemIcon><Add /></ListItemIcon>
+          <ListItemText primary="New" />
+        </ListItem>
+      </List>
+    </Popover>
 
-          <ListItem button onClick={() => setSettingsOpen(true)}>
-            <ListItemIcon>
-              <Settings />
-            </ListItemIcon>
-            {sidebarOpen && <ListItemText primary="Settings" />}
-          </ListItem>
+    <Divider />
 
-          <ListItem button onClick={handleLogout}>
-            <ListItemIcon>
-              <Logout />
-            </ListItemIcon>
-            {sidebarOpen && <ListItemText primary="Sign Out" />}
-          </ListItem>
+    <ListItem button onClick={() => setSettingsOpen(true)}>
+      <ListItemIcon><Settings /></ListItemIcon>
+      {sidebarOpen && <ListItemText primary="Settings" />}
+    </ListItem>
 
-<ListItem button onClick={() => setShowTrash(true)}>
-  <ListItemIcon><DeleteIcon /></ListItemIcon>
-  <ListItemText primary="Trash" />
-</ListItem>
+    <ListItem button onClick={handleLogout}>
+      <ListItemIcon><Logout /></ListItemIcon>
+      {sidebarOpen && <ListItemText primary="Sign Out" />}
+    </ListItem>
 
-        </List>
-      </Drawer>
+    <ListItem button onClick={() => setShowTrash(true)}>
+      <ListItemIcon><DeleteIcon /></ListItemIcon>
+      {sidebarOpen && <ListItemText primary="Trash" />}
+    </ListItem>
+  </List>
+</Drawer>
 
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+ <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Grid container alignItems="center" spacing={2} mb={3}>
-          <Grid item xs={12} md={5}>
+       <Grid item xs={12} md={5}>
             <TextField
               fullWidth
               placeholder="Search tasks"
@@ -430,17 +453,10 @@ const handleUndoChange = async (
                           {...provided.droppableProps}
                           minHeight={200}
                         >
-                          {filteredTasks
-  .filter((task) => {
-    if (status === "Trash") return task.trashed === true;
-    return task.status === status && !task.trashed;
-  })
+                         {filteredTasks
+  .filter((task) => status === "Trash" ? task.trashed : task.status === status && !task.trashed)
   .map((task, index) => (
-    <Draggable
-      key={task.id}
-      draggableId={task.id}
-      index={index}
-    >
+    <Draggable key={task.id} draggableId={task.id} index={index}>
       {(provided: DraggableProvided) => (
         <Paper
           ref={provided.innerRef}
@@ -481,16 +497,10 @@ const handleUndoChange = async (
                 }}
               />
             }
-            label={
-              <Typography fontWeight={600}>
-                {task.title}
-              </Typography>
-            }
+            label={<Typography fontWeight={600}>{task.title}</Typography>}
           />
 
-          <Typography variant="body2">
-            {task.description}
-          </Typography>
+          <Typography variant="body2">{task.description}</Typography>
 
           {(status === "Review" || status === "Done") && (
             <IconButton onClick={() => handleMoveToTrash(task.id)}>
@@ -510,11 +520,12 @@ const handleUndoChange = async (
           <IconButton onClick={() => setEditingTask(task)}>
             <EditIcon />
           </IconButton>
+
           {status === "Pending" && (
             <Tooltip title="Mark as Active">
               <IconButton
                 onClick={() =>
-                  handleToggleComplete(task.id, false, "Pending")
+                  handleStatusChange(task.id, "Active")
                 }
                 color="success"
               >
@@ -525,7 +536,7 @@ const handleUndoChange = async (
         </Paper>
       )}
     </Draggable>
-))}
+  ))}
 
                           {provided.placeholder}
                         </Box>)}
