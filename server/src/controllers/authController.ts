@@ -45,10 +45,10 @@ export const registerUser = async (req: Request, res: Response) => {
   }
 };
 
-export const loginUser = async (req: Request, res: Response) => {
+export const User = async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
-  console.log("📥 Login attempt:", { email });
+  console.log("Login attempt:", { email });
 
   if (!email || !password) {
     return res.status(400).json({ message: "Email and password are required" });
