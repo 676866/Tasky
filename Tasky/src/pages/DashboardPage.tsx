@@ -24,10 +24,10 @@ interface Task {
   userId: string;
   createdAt: string;
   updatedAt: string;
-  status: "Active" | "Pending" | "Review" | "Done" |"Trash";
+  status: "Active" | "Pending" | "Review" | "Done";
   trashed: boolean;
 }
-const statusColumns = ["Active", "Pending", "Review", "Done", "Trash"];
+const statusColumns = ["Active", "Pending", "Review", "Done",];
 const drawerWidth = 220;
 const DashboardPage = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -85,7 +85,7 @@ setTasks(res.data.tasks.filter(t => showTrash ? t.trashed : !t.trashed));
 
   const handleLogout = () => {
     localStorage.clear();
-     toast.success("Logged out successfully!👋", {
+     toast.success("Logged out successfully!", {
     position: "top-right",
   });
     window.location.href = "/";
@@ -198,10 +198,8 @@ const handleUndoChange = async (
 
 const handleMoveToTrash = async (taskId: string) => {
   try {
-    await axios.put(
-      `${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`,
-      { trashed: true },
-      {
+    await axios.delete(
+      `${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`,{
         headers: {
           Authorization: `Bearer ${token}`,
         },
