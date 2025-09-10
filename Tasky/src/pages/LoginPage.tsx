@@ -12,10 +12,13 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import dodgeSound from "../assets/dodge.mp3";
 import Footer from "../components/Footer";
+import { useAuth } from "../context/AuthContext"; // import AuthContext
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const { login } = useAuth(); //get login from AuthContext
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -61,8 +64,10 @@ const LoginPage = () => {
 
       const { user, token } = res.data;
 
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      // Call AuthContext.login (updates state + localStorage)
+      login(user, token);
+
+      // Optionally store last login time
       localStorage.setItem("lastLoginTime", Date.now().toString());
 
       navigate("/dashboard");
