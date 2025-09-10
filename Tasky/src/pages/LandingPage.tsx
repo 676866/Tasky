@@ -71,7 +71,7 @@ const LandingPage = () => {
       </AppBar>
 
       <Container maxWidth="lg" sx={{ mt: 12, flexGrow: 1 }}>
-        <Grid container spacing={6} alignItems="center">
+        <Grid container spacing={6} alignItems="center" >
           <Grid item xs={12} md={6}>
             <Slide direction="up" in timeout={600}>
               <Box>

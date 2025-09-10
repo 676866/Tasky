@@ -11,7 +11,9 @@ import { toast } from "react-toastify";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete"; 
 import GroupIcon from "@mui/icons-material/Group";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { getTrashedCount } from "./TrashPage";
+
 
 
 interface Task {
@@ -43,7 +45,8 @@ const DashboardPage = () => {
   const [notifDrawer, setNotifDrawer] = useState(false);
   const [] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [showTrash, setShowTrash] = useState(false); 
+  const [showTrash] = useState(false); 
+  const [trashCount, setTrashCount] = useState(0);
   const [highlightedColumn, setHighlightedColumn] = useState<string | null>(
     null,
   );
@@ -82,6 +85,10 @@ setTasks(res.data.tasks.filter(t => showTrash ? t.trashed : !t.trashed));
  useEffect(() => {
     fetchTasks();
   }, []);
+
+ useEffect(() => {
+  getTrashedCount().then(setTrashCount);
+}, []);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -196,22 +203,6 @@ const handleUndoChange = async (
   return matchSearch && matchStatus && !t.trashed;
 });
 
-const handleMoveToTrash = async (taskId: string) => {
-  try {
-    await axios.delete(
-      `${import.meta.env.VITE_API_URL}/api/tasks/${taskId}`,{
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    toast.success("Moved to trash!");
-    fetchTasks();
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to move task to trash");
-  }
-};
 
 
   const handleStatusChange = async (taskId: string, newStatus: Task["status"]) => {
@@ -227,6 +218,33 @@ const handleMoveToTrash = async (taskId: string) => {
     console.error(err);
   }
 };
+
+
+const handleMoveToTrash = async (taskId: string) => {
+  try {
+    const token = localStorage.getItem("token"); 
+    
+    if (!token) {
+      console.error("No token found");
+      return;
+    }
+
+    await axios.put(
+      `http://localhost:5000/api/tasks/${taskId}/trash`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, 
+        },
+      }
+    );
+
+    fetchTasks();
+  } catch (error) {
+    console.error("Failed to move task to trash", error);
+  }
+};
+
 
 
   return (
@@ -340,19 +358,41 @@ const handleMoveToTrash = async (taskId: string) => {
     <Divider />
 
     <ListItem button onClick={() => setSettingsOpen(true)}>
-      <ListItemIcon><Settings /></ListItemIcon>
-      {sidebarOpen && <ListItemText primary="Settings" />}
-    </ListItem>
+  <ListItemIcon>
+    <Settings />
+  </ListItemIcon>
+  {sidebarOpen && <ListItemText primary="Settings" />}
+</ListItem>
 
-    <ListItem button onClick={handleLogout}>
-      <ListItemIcon><Logout /></ListItemIcon>
-      {sidebarOpen && <ListItemText primary="Sign Out" />}
-    </ListItem>
+<ListItem button onClick={handleLogout}>
+  <ListItemIcon>
+    <Logout />
+  </ListItemIcon>
+  {sidebarOpen && <ListItemText primary="Sign Out" />}
+</ListItem>
 
-    <ListItem button onClick={() => setShowTrash(true)}>
-      <ListItemIcon><DeleteIcon /></ListItemIcon>
-      {sidebarOpen && <ListItemText primary="Trash" />}
-    </ListItem>
+<ListItem button component={Link} to="/trash">
+  <ListItemIcon>
+<DeleteIcon />
+  </ListItemIcon>
+  {sidebarOpen && (
+    <ListItemText
+      primary={
+        <div className="flex items-center gap-2">
+          <span>Trash</span>
+          {trashCount > 0 && (
+            <span className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full">
+              {trashCount}
+            </span>
+          )}
+        </div>
+      }
+    />
+  )}
+</ListItem>
+
+
+
   </List>
 </Drawer>
 
@@ -501,9 +541,19 @@ const handleMoveToTrash = async (taskId: string) => {
           <Typography variant="body2">{task.description}</Typography>
 
           {(status === "Review" || status === "Done") && (
-            <IconButton onClick={() => handleMoveToTrash(task.id)}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
+          <IconButton
+  type="button"
+  onClick={(e) => {
+    e.preventDefault();
+    console.log("Deleting task with ID:", task.id);
+    
+    handleMoveToTrash(task.id);
+  }}
+>
+  <DeleteIcon fontSize="small" />
+</IconButton>
+
+
           )}
 
           <Typography variant="caption">
@@ -623,3 +673,5 @@ const handleMoveToTrash = async (taskId: string) => {
 };
 
 export default DashboardPage;
+
+

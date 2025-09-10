@@ -9,12 +9,15 @@ import TasksPage from "./pages/TasksPage";
 import DashboardPage from "./pages/DashboardPage";
 import PrivateRoute from "./components/PrivateRoute";
 import CollaboratePage from "./pages/CollaboratePage";
+import TrashPage from "./pages/TrashPage";
+
 
 const App = () => {
   return (
     <>
       <Router>
         <Routes>
+          <Route path="/trash" element={<TrashPage />} />
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
