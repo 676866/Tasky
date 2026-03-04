@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes";
 import taskRoutes from "./routes/taskRoutes";
 import { authenticate } from "./middleware/authMiddleware";
+import organizationRoutes from "./routes/organizationRoutes";
+import projectRoutes from "./routes/projectRoutes";
 
 dotenv.config();
 
@@ -31,6 +33,9 @@ app.use(
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api", taskRoutes);
+app.use("/api/organizations", organizationRoutes);
+app.use("/api/projects", projectRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Hello Frankit, your API is running");

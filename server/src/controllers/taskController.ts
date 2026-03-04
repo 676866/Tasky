@@ -102,26 +102,19 @@ export const updateTask = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-export const deleteTask = async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-  const userId = req.user?.id;
 
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized: Missing user ID" });
-  }
+export const moveToTrash = async (req: Request, res: Response) => {
+  const { id } = req.params;
 
   try {
-    const task = await prisma.task.deleteMany({
-      where: { id, userId },
+    const task = await prisma.task.update({
+      where: { id },
+      data: { trashed: true },
     });
 
-    if (task.count === 0) {
-      return res.status(404).json({ message: "Task not found or unauthorized" });
-    }
-
-    res.status(200).json({ message: "Task permanently deleted" });
-  } catch (err) {
-    console.error("Error deleting task:", err);
-    res.status(500).json({ message: "Failed to delete task" });
+    res.status(200).json(task);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to move task to trash" });
   }
 };
+

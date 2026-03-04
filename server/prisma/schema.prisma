@@ -8,13 +8,19 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  username  String   @unique
-  tasks     Task[]
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  password        String
+  username        String           @unique
+  role            UserRole         @default(MEMBER)
+  createdAt       DateTime         @default(now())
+  organizationId  String?
+  organization    Organization?    @relation(fields: [organizationId], references: [id])
+  tasks           Task[]
+  notifications   Notification[]
+  createdProjects Project[]        @relation("ProjectCreator")
+  assignments     ProjectAssignment[]
 }
 
 model Task {
@@ -23,14 +29,63 @@ model Task {
   description String?
   completed   Boolean    @default(false)
   userId      String
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  projectId   String?
   category    String
   dueDate     DateTime
   status      TaskStatus @default(Pending)
-  user        User       @relation(fields: [userId], references: [id])
-  trashed     Boolean  @default(false) 
+  trashed     Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
+  user        User       @relation(fields: [userId], references: [id])
+  project     Project?   @relation(fields: [projectId], references: [id])
+}
+
+model Organization {
+  id          String              @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime            @default(now())
+  users       User[]
+  projects    Project[]
+}
+
+model Project {
+  id              String             @id @default(uuid())
+  name            String
+  description     String?
+  deadline        DateTime?
+  progress        Int                @default(0)
+  status          ProjectStatus      @default(PENDING)
+  organizationId  String
+  createdById     String
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  organization    Organization       @relation(fields: [organizationId], references: [id])
+  createdBy       User               @relation("ProjectCreator", fields: [createdById], references: [id])
+  tasks           Task[]
+  assignments     ProjectAssignment[]
+}
+
+model ProjectAssignment {
+  id          String     @id @default(uuid())
+  projectId   String
+  userId      String
+  assignedAt  DateTime   @default(now())
+  progress    Int        @default(0)
+
+  project     Project    @relation(fields: [projectId], references: [id])
+  user        User       @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        String     @id @default(uuid())
+  message   String
+  userId    String
+  read      Boolean    @default(false)
+  createdAt DateTime   @default(now())
+  user      User       @relation(fields: [userId], references: [id])
 }
 
 enum TaskStatus {
@@ -38,4 +93,16 @@ enum TaskStatus {
   Pending
   Review
   Done
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  MEMBER
+}
+
+enum ProjectStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
 }

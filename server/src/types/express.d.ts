@@ -1,4 +1,6 @@
 import "express";
+import { User } from "@prisma/client";
+ 
 export interface UserPayload {
   id: string;
   email: string;

@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { PrismaClient } from "@prisma/client";
+import { UserPayload } from "../types/express";
+
 
 const prisma = new PrismaClient();
 
@@ -14,7 +16,7 @@ interface JwtPayload {
 export const authenticate = async (
   req: Request,
   res: Response,
-  next: NextFunction,
+  next: NextFunction
 ) => {
   const authHeader = req.headers.authorization;
 
@@ -37,7 +39,7 @@ export const authenticate = async (
       return res.status(401).json({ message: "User not found" });
     }
 
-    (req as any).user = {
+    req.user = {
       id: user.id,
       email: user.email,
     };
